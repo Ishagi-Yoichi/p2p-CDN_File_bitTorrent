@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+/typings
+
+# Compilation Artifacts
+dist/
+build/
+*.js
+*.d.ts
+*.map
+# Optionally, if you have a specific output directory configured in tsconfig.json (e.g., "outDir": "./lib")
+# lib/
+
+# Environment
+.env
+.env.local
+
+# Editor/OS specific files
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.user
+*.bak
+*.log
