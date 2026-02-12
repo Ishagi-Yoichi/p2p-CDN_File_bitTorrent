@@ -13,11 +13,29 @@ wss.on("connection", (socket: WebSocket) => {
   });
 
   socket.on("close", () => {
-    console.log("Peer disconnected");
+    console.log("Socket closed");
 
-    // IMPORTANT:
-    // We must detect which peer disconnected
-    // (Handled later when we attach peerId → socket mapping)
+    const peerId = store.removePeerBySocket(socket);
+
+    if (!peerId) return;
+
+    const meta = store.getPeerMeta(peerId);
+    if (!meta) return;
+
+    const peers = store.getPeers(meta.fileId);
+
+    peers.forEach((otherPeerId) => {
+      const peerSocket = store.getSocket(otherPeerId);
+
+      peerSocket?.send(
+        JSON.stringify({
+          type: "PEER_LEFT",
+          payload: { peerId },
+        })
+      );
+    });
+
+    console.log("Cleaned peer:", peerId);
   });
 });
 
