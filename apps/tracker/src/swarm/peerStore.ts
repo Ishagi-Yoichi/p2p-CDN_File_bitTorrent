@@ -51,6 +51,10 @@ export class PeerStore {
     return this.peerSockets.get(peerId);
   }
 
+  getFileId(peerId: string): string | undefined {
+    return this.peerMeta.get(peerId)?.fileId;
+  }
+
   getPeerMeta(peerId: string) {
     return this.peerMeta.get(peerId);
   }

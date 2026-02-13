@@ -8,7 +8,7 @@ interface TrackerMessage {
 export class SwarmManager {
   private socket?: WebSocket;
   private peers = new Set<PeerId>();
-
+  private messageQueue: string[] = [];
   constructor(private trackerUrl: string, private peerId: PeerId) {}
 
   connect() {
@@ -16,6 +16,7 @@ export class SwarmManager {
 
     this.socket.onopen = () => {
       console.log("Connected to tracker");
+      this.flushQueue();
     };
 
     this.socket.onmessage = (event) => {
@@ -120,11 +121,21 @@ export class SwarmManager {
   }
 
   private send(message: TrackerMessage) {
+    const payload = JSON.stringify(message);
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
-      console.warn("Socket not ready");
+      console.warn("Socket not ready,queuing message", message.type);
+      this.messageQueue.push(payload);
       return;
     }
 
-    this.socket.send(JSON.stringify(message));
+    this.socket.send(payload);
+  }
+
+  private flushQueue() {
+    if (!this.socket) return;
+    while (this.messageQueue.length > 0) {
+      const msg = this.messageQueue.shift();
+      if (msg) this.socket.send(msg);
+    }
   }
 }

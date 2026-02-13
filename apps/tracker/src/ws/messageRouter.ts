@@ -12,6 +12,7 @@ export function handleMessage(
 
   switch (message.type) {
     case "JOIN_SWARM":
+      (socket as any).peerId = message.payload.peerId;
       handleJoin(store, socket, message.payload);
       break;
 
@@ -31,9 +32,7 @@ function handleJoin(store: PeerStore, socket: WebSocket, payload: any) {
   store.addPeer(peerId, fileId, socket);
 
   // Send swarm state
-  const peers = store
-    .getPeers(fileId)
-    .filter((id) => id !== peerId);
+  const peers = store.getPeers(fileId).filter((id) => id !== peerId);
 
   socket.send(
     JSON.stringify({

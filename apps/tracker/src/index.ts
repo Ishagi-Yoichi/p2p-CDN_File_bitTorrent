@@ -13,29 +13,41 @@ wss.on("connection", (socket: WebSocket) => {
   });
 
   socket.on("close", () => {
-    console.log("Socket closed");
+    console.log("Peer disconnected");
 
-    const peerId = store.removePeerBySocket(socket);
+    // 1. Retrieve the peerId we attached in messageRouter
+    const peerId = (socket as any).peerId;
 
-    if (!peerId) return;
+    if (peerId) {
+      // 2. We need to find which file/swarm this peer was in to notify others.
+      // We can look this up in the store before removing.
+      // (This assumes your PeerStore exposes a way to get fileId from peerId,
+      // check PeerStore.ts implementation of peerMeta)
 
-    const meta = store.getPeerMeta(peerId);
-    if (!meta) return;
+      // Accessing private map via a workaround or add a public method to PeerStore
+      // Ideally, add `getFileId(peerId)` to PeerStore.
+      // For now, let's assume we modify PeerStore to return the deleted info.
 
-    const peers = store.getPeers(meta.fileId);
+      const fileId = store.getFileId(peerId); // You need to add this method to PeerStore
 
-    peers.forEach((otherPeerId) => {
-      const peerSocket = store.getSocket(otherPeerId);
+      store.removePeer(peerId);
 
-      peerSocket?.send(
-        JSON.stringify({
-          type: "PEER_LEFT",
-          payload: { peerId },
-        })
-      );
-    });
-
-    console.log("Cleaned peer:", peerId);
+      if (fileId) {
+        // 3. Notify remaining peers
+        const peers = store.getPeers(fileId);
+        peers.forEach((otherPeerId) => {
+          const otherSocket = store.getSocket(otherPeerId);
+          if (otherSocket && otherSocket.readyState === WebSocket.OPEN) {
+            otherSocket.send(
+              JSON.stringify({
+                type: "PEER_LEFT",
+                payload: { peerId },
+              })
+            );
+          }
+        });
+      }
+    }
   });
 });
 
