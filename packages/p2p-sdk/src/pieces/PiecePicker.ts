@@ -4,6 +4,6 @@ export class PiecePicker {
 
     if (!available.length) return null;
 
-    return available[Math.floor(Math.random() * available.length)];
+    return available[Math.floor(Math.random() * available.length)] || null;
   }
 }

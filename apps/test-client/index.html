@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>P2P CDN Test</title>
+  </head>
+  <body>
+    <h1>P2P CDN Test</h1>
+
+    <script type="module">
+      import { P2PCDNClient } from "/packages/p2p-sdk/dist/client/P2PCDNClient.js";
+
+      const manifest = {
+        fileId: "video-abc",
+        totalChunks: 100,
+        chunkSize: 256 * 1024,
+        trackerUrl: "ws://localhost:8080",
+      };
+
+      const client = new P2PCDNClient(manifest);
+      client.start();
+    </script>
+  </body>
+</html>

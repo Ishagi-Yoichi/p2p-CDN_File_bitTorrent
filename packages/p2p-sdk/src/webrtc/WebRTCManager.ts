@@ -5,7 +5,7 @@ export class WebRTCManager {
 
   constructor(
     private peerId: string,
-    private swarm: any, // SwarmManager injected
+    private swarm: any // SwarmManager injected
   ) {
     swarm.on("peerJoined", (peerId: string) => {
       this.handlePeerDiscovered(peerId);
@@ -72,7 +72,7 @@ export class WebRTCManager {
   private async handleSDP(
     connection: PeerConnection,
     remotePeerId: string,
-    sdp: RTCSessionDescriptionInit,
+    sdp: RTCSessionDescriptionInit
   ) {
     if (sdp.type === "offer") {
       await connection.pc.setRemoteDescription(sdp);
@@ -86,5 +86,15 @@ export class WebRTCManager {
     if (sdp.type === "answer") {
       await connection.pc.setRemoteDescription(sdp);
     }
+  }
+
+  getDataChannel(peerId: string) {
+    return this.connections.get(peerId)?.dc;
+  }
+
+  broadcast(message: string) {
+    this.connections.forEach((conn) => {
+      conn.dc?.send(message);
+    });
   }
 }
