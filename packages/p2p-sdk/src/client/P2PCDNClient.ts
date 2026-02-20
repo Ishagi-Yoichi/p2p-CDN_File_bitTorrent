@@ -1,6 +1,6 @@
-import { SwarmManager } from "../swarm/SwarmManager";
-import { WebRTCManager } from "../webrtc/WebRTCManager";
-import { PieceManager } from "../pieces/PieceManager";
+import { SwarmManager } from "../swarm/SwarmManager.js";
+import { WebRTCManager } from "../webrtc/WebRTCManager.js";
+import { PieceManager } from "../pieces/PieceManager.js";
 
 export interface Manifest {
   fileId: string;

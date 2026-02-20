@@ -1,4 +1,4 @@
-import { Bitfield } from "./BitField";
+import { Bitfield } from "./Bitfield";
 import { PiecePicker } from "./PiecePicker";
 
 export class PieceManager {
