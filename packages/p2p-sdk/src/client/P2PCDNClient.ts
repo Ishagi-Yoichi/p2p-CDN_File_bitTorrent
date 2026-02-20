@@ -7,6 +7,8 @@ export interface Manifest {
   totalChunks: number;
   chunkSize: number;
   trackerUrl: string;
+
+  chunkHashes: string[]; //required
 }
 
 type EventCallback = (data?: any) => void;
@@ -34,7 +36,7 @@ export class P2PCDNClient {
     this.webrtc = new WebRTCManager(this.peerId, this.swarm);
 
     this.pieces = new PieceManager(
-      manifest.totalChunks,
+      manifest,
       this.createPeerMessagingInterface(),
       this.createStorageInterface()
     );

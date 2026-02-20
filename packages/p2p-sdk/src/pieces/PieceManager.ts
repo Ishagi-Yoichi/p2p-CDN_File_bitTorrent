@@ -1,5 +1,7 @@
+import { Manifest } from "../client/P2PCDNClient";
 import { Bitfield } from "./Bitfield";
 import { PiecePicker } from "./PiecePicker";
+import { sha256 } from "../utils/crypto";
 
 export class PieceManager {
   private localBitfield: Bitfield;
@@ -7,11 +9,11 @@ export class PieceManager {
   private picker = new PiecePicker();
 
   constructor(
-    totalChunks: number,
+    private manifest: Manifest,
     private peerManager: any,
     private storage: any
   ) {
-    this.localBitfield = new Bitfield(totalChunks);
+    this.localBitfield = new Bitfield(manifest.totalChunks);
   }
 
   //bitfield exchange
@@ -43,9 +45,23 @@ export class PieceManager {
   //piece received
 
   async handlePiece(peerId: string, chunkIndex: number, data: ArrayBuffer) {
-    const verified = true; // ✅ hashing later Phase 3.5
+    const expectedHash = this.manifest.chunkHashes[chunkIndex];
 
-    if (!verified) return;
+    if (!expectedHash) {
+      console.warn("Missing hash for chunk:", chunkIndex);
+      return;
+    }
+
+    const actualHash = await sha256(data);
+
+    if (actualHash !== expectedHash) {
+      console.warn("Hash mismatch:", chunkIndex);
+
+      // Future extension point:
+      // this.peerManager.penalizePeer(peerId);
+
+      return;
+    }
 
     await this.storage.saveChunk(chunkIndex, data);
 
