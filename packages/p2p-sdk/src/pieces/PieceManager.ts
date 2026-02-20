@@ -4,6 +4,8 @@ import { PiecePicker } from "./PiecePicker";
 import { sha256 } from "../utils/crypto";
 
 export class PieceManager {
+  private availabilityMap = new Map<number, number>();
+
   private localBitfield: Bitfield;
   private remoteBitfields = new Map<string, Bitfield>();
   private picker = new PiecePicker();
@@ -16,13 +18,33 @@ export class PieceManager {
     this.localBitfield = new Bitfield(manifest.totalChunks);
   }
 
+  private incrementAvailability(bitfield: any) {
+    for (let i = 0; i < this.manifest.totalChunks; i++) {
+      if (bitfield.has(i)) {
+        const count = this.availabilityMap.get(i) ?? 0;
+        this.availabilityMap.set(i, count + 1);
+      }
+    }
+  }
+
+  private decrementAvailability(bitfield: any) {
+    for (let i = 0; i < this.manifest.totalChunks; i++) {
+      if (bitfield.has(i)) {
+        const count = this.availabilityMap.get(i) ?? 1;
+        this.availabilityMap.set(i, Math.max(0, count - 1));
+      }
+    }
+  }
+
   //bitfield exchange
 
   handleBitfield(peerId: string, bitfieldString: string) {
-    const bf = new Bitfield(bitfieldString.length);
+    const bf = new Bitfield(this.manifest.totalChunks);
     bf.fromString(bitfieldString);
 
     this.remoteBitfields.set(peerId, bf);
+
+    this.incrementAvailability(bf);
 
     this.scheduleDownloads(peerId);
   }
@@ -35,7 +57,11 @@ export class PieceManager {
 
     const missing = this.localBitfield.missingPieces();
 
-    const piece = this.picker.pick(missing, remoteBF);
+    const piece = this.picker.pickRarest(
+      missing,
+      this.availabilityMap,
+      remoteBF
+    );
 
     if (piece === null) return;
 
@@ -76,7 +102,22 @@ export class PieceManager {
     const bf = this.remoteBitfields.get(peerId);
     if (!bf) return;
 
-    bf.set(chunkIndex);
+    if (!bf.has(chunkIndex)) {
+      bf.set(chunkIndex);
+
+      const count = this.availabilityMap.get(chunkIndex) ?? 0;
+      this.availabilityMap.set(chunkIndex, count + 1);
+    }
+  }
+
+  handlePeerLeft(peerId: string) {
+    const bf = this.remoteBitfields.get(peerId);
+
+    if (!bf) return;
+
+    this.decrementAvailability(bf);
+
+    this.remoteBitfields.delete(peerId);
   }
 
   getLocalBitfield() {
